@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE-edge">
+	<meta name = "viewport" content = "width=device-width,initial-scale=1">
+	<title>Survey Form</title>
+	<link rel="stylesheet" href="css/bootstrap.min.css">
+	<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+	<h1>Item Records</h1>
+	<form>
+		<label>Item Name</label><br/>
+		<input type="text" id="item"><br/><br/>
+		<label>Item Quantity</label><br/>
+		<input type="number" id="quantity"><br/><br/>
+		<button id="insert">Insert</button>
+		<button id="create">Create Table</button>
+		<button id="delete">Delete Table</button>
+		<button id="fetch">Fetch Record</button>
+	</form><br/><hr>
+	<h4>Record</h4>
+	<table class="table table-bordered table-hover" id="record"></table>
+	<script src="js/jquery-3.6.0.min.js"></script>
+	<script>
+		var db = openDatabase("itemDB", "1.0", "itemDB", 65535);
+		$(function() {
+			loadData();
+    		$("#create").click(function() {
+        	db.transaction(function(transaction){
+            	var sql = "CREATE TABLE ITEMS " +
+            	"(ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT," +
+            	"ITEM VARCHAR(100) NOT NULL," +
+            	"QUANTITY INT(5) NOT NULL)";
+            	transaction.executeSql(sql, undefined, function() {
+            	    alert("Table is created successfully");
+            	}, function() {
+                	alert("Table has already been created");
+            	})
+        	});
+   		 });
+    	$("#insert").click(function() {
+    	    db.transaction(function(transaction) {
+    	        var item = $("#item").val();
+    	        var quantity = $("#quantity").val();
+    	        var sql = "INSERT INTO ITEMS(ITEM, QUANTITY)" + 
+    	        "VALUES(?,?);";
+    	        transaction.executeSql(sql, [item, quantity], function() {
+    	            alert("Successfully Inserted!");
+    	        }, function() {
+    	            alert("Insertion Failed!");
+    	        })
+    	    });
+    	});
+    	$("#fetch").click(function() {
+    		loadData();
+    	});
+		function loadData() {
+			$('#record').children().remove();
+    	    db.transaction(function(transaction) {
+    	        var sql = "SELECT * " +
+    	        "FROM ITEMS " +
+    	        "ORDER BY ID " +
+    	        "ASC";
+    	        transaction.executeSql(sql, undefined, function(transaction, result) {
+    	            if(result.rows.length) {
+    	            	for(var i = 0; i < result.rows.length; i++) {
+    	            		var row = result.rows.item(i);
+    	            		var item = row.item;
+    	            		var id = row.id;
+    	            		var quantity = row.quantity;
+    	            		$('#record').append('<tr><td>' + id + '</td><td>' + item + '</td><td>' + quantity + '</td></tr>');
+    	            	}
+    	            }
+    	            else {
+    	            	$("#record").append('<tr><td colspan="3 align="center">No item found</td></tr>');
+    	            }
+    	        }, function(transaction, err) {
+    	            alert(err.message);
+    	        })
+    	    });
+		}
+    	$("#delete").click(function(){
+    	    if(!confirm("Are you sure to delete this table?")) return;;
+    	    db.transaction(function(transaction) {
+    	        var sql = "DROP TABLE ITEMS;";
+    	        transaction.executeSql(sql, undefined, function(transaction, result) {
+    	            alert("Table successfully deleted")
+    	        }, function() {
+    	            alert("Deletion Unsuccessful");
+    	        })
+    	    });
+    	});
+	});
+	</script>
+</body>
+</html>
